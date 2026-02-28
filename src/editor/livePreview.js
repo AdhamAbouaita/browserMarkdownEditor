@@ -1,4 +1,4 @@
-import { ViewPlugin, Decoration } from '@codemirror/view';
+import { EditorView, Decoration } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { MathWidget } from './mathWidget.js';
 import { HorizontalRuleWidget } from './hrWidget.js';
@@ -306,23 +306,30 @@ function buildDecorations(view, getAssetUrl, editorMode) {
 
 /**
  * Factory for creating the Live Preview CM6 extension.
- * Needs to be a factory so we can pass the getAssetUrl Context function into the widgets.
+ * Uses a StateField (not ViewPlugin) so that decorations are allowed
+ * to replace ranges that span across line breaks (block math, images, code blocks).
+ * Decorations are computed in update() and passively read via from() to avoid
+ * viewport destabilization loops.
  */
-export function createLivePreviewPlugin(getAssetUrl, editorMode) {
-    return ViewPlugin.fromClass(
-        class {
-            constructor(view) {
-                this.decorations = buildDecorations(view, getAssetUrl, editorMode);
-            }
+import { StateField } from '@codemirror/state';
 
-            update(update) {
-                if (update.docChanged || update.selectionSet || update.viewportChanged) {
-                    this.decorations = buildDecorations(update.view, getAssetUrl, editorMode);
-                }
-            }
+export function createLivePreviewPlugin(getAssetUrl, editorMode) {
+    const field = StateField.define({
+        create(state) {
+            const viewShim = { state };
+            return buildDecorations(viewShim, getAssetUrl, editorMode);
         },
-        {
-            decorations: (v) => v.decorations,
+        update(decorations, tr) {
+            if (tr.docChanged || tr.selection) {
+                const viewShim = { state: tr.state };
+                return buildDecorations(viewShim, getAssetUrl, editorMode);
+            }
+            return decorations;
+        },
+        provide(field) {
+            return EditorView.decorations.from(field);
         }
-    );
+    });
+    return field;
 }
+

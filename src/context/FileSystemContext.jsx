@@ -14,7 +14,7 @@ async function buildFileTree(dirHandle, path = '') {
     for await (const [name, handle] of dirHandle.entries()) {
         if (name === '.DS_Store') continue;
         // Hide standard system folders from the UI
-        if (handle.kind === 'directory' && (name === 'Assets' || name === 'Trash')) continue;
+        if (handle.kind === 'directory' && (name === '.Assets' || name === '.Trash')) continue;
 
         const entryPath = path ? `${path}/${name}` : name;
 
@@ -163,44 +163,57 @@ export function FileSystemProvider({ children }) {
     }, [rootHandle, refreshTree]);
 
     /**
-     * Look for an 'Assets' folder in the root and try to get a file blob URL.
-     * Returns null if folder or file is not found.
+     * Look for a file in an 'Assets' folder.
+     * If parentDirHandle is provided, first look in parentDirHandle/Assets/,
+     * then fall back to rootHandle/Assets/ for backwards compatibility.
      */
-    const getAssetUrl = useCallback(async (fileName) => {
+    const getAssetUrl = useCallback(async (fileName, parentDirHandle) => {
+        // Try the local Assets folder first (sibling of the .md file)
+        if (parentDirHandle) {
+            try {
+                const localAssets = await parentDirHandle.getDirectoryHandle('.Assets');
+                const fileHandle = await localAssets.getFileHandle(fileName);
+                const file = await fileHandle.getFile();
+                return URL.createObjectURL(file);
+            } catch (err) {
+                // Not found locally, fall through to root
+            }
+        }
+
+        // Fallback: root-level Assets folder
         if (!rootHandle) return null;
         try {
-            const assetsDir = await rootHandle.getDirectoryHandle('Assets');
+            const assetsDir = await rootHandle.getDirectoryHandle('.Assets');
             const fileHandle = await assetsDir.getFileHandle(fileName);
             const file = await fileHandle.getFile();
             return URL.createObjectURL(file);
         } catch (err) {
-            // Folder or file doesn't exist
             return null;
         }
     }, [rootHandle]);
 
     /**
-     * Save a Blob to the 'Assets' folder. Creates the folder if it doesn't exist.
+     * Save a Blob to an 'Assets' folder. If parentDirHandle is provided,
+     * saves to parentDirHandle/Assets/. Otherwise falls back to rootHandle/Assets/.
+     * Creates the Assets folder if it doesn't exist.
      */
-    const saveAsset = useCallback(async (fileName, blob) => {
-        if (!rootHandle) throw new Error('No vault open');
+    const saveAsset = useCallback(async (fileName, blob, parentDirHandle) => {
+        const targetDir = parentDirHandle || rootHandle;
+        if (!targetDir) throw new Error('No vault open');
 
-        // Ensure "Assets" folder exists
         let assetsDir;
         try {
-            assetsDir = await rootHandle.getDirectoryHandle('Assets', { create: true });
+            assetsDir = await targetDir.getDirectoryHandle('.Assets', { create: true });
         } catch (err) {
             console.error('Could not create/access Assets folder:', err);
             throw err;
         }
 
-        // Create file and write blob
         const fileHandle = await assetsDir.getFileHandle(fileName, { create: true });
         const writable = await fileHandle.createWritable();
         await writable.write(blob);
         await writable.close();
 
-        // Refresh file explorer to show new asset
         await refreshTree(rootHandle);
     }, [rootHandle, refreshTree]);
 
@@ -231,7 +244,7 @@ export function FileSystemProvider({ children }) {
 
         try {
             // Attempt to get or create the Trash folder
-            const trashDir = await rootHandle.getDirectoryHandle('Trash', { create: true });
+            const trashDir = await rootHandle.getDirectoryHandle('.Trash', { create: true });
 
             if (node.kind === 'file') {
                 const newFileHandle = await trashDir.getFileHandle(node.name, { create: true });
