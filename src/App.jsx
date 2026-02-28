@@ -2,6 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useFileSystem } from './context/FileSystemContext.jsx';
 import FileExplorer from './components/FileExplorer.jsx';
 import EditorPane from './components/EditorPane.jsx';
+import SettingsPanel from './components/SettingsPanel.jsx';
+import { Settings } from './components/icons.jsx';
 
 export default function App() {
   const {
@@ -28,6 +30,11 @@ export default function App() {
   // The global light/dark theme state
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
+  // Font size settings (persisted via localStorage)
+  const [editorFontSize, setEditorFontSize] = useState(() => parseInt(localStorage.getItem('editorFontSize') || '16', 10));
+  const [treeFontSize, setTreeFontSize] = useState(() => parseInt(localStorage.getItem('treeFontSize') || '13', 10));
+  const [showSettings, setShowSettings] = useState(false);
+
   // Keep HTML root data attribute in sync with state for global CSS variables
   useEffect(() => {
     if (theme === 'light') {
@@ -38,15 +45,52 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Sync font sizes to CSS variables and localStorage
+  useEffect(() => {
+    document.documentElement.style.setProperty('--font-size-normal', editorFontSize + 'px');
+    localStorage.setItem('editorFontSize', editorFontSize);
+  }, [editorFontSize]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--nav-item-size', treeFontSize + 'px');
+    localStorage.setItem('treeFontSize', treeFontSize);
+  }, [treeFontSize]);
+
+  // Expanded folder paths (persisted via localStorage)
+  const [expandedPaths, setExpandedPaths] = useState(() => {
+    try {
+      const stored = localStorage.getItem('expandedPaths');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const handleToggleExpand = useCallback((path) => {
+    setExpandedPaths(prev => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      localStorage.setItem('expandedPaths', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
   // Refs for debounced auto-save (avoid stale closures)
   const fileContentRef = useRef(fileContent);
   const activeFileRef = useRef(activeFile);
   useEffect(() => { fileContentRef.current = fileContent; }, [fileContent]);
   useEffect(() => { activeFileRef.current = activeFile; }, [activeFile]);
 
+  // Persist the active file path to localStorage
+  useEffect(() => {
+    if (activeFile?.path) {
+      localStorage.setItem('lastFilePath', activeFile.path);
+    }
+  }, [activeFile]);
+
   // Sidebar resizing
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const isResizing = useRef(false);
+  const hasRestoredFile = useRef(false);
 
   const handleFileClick = useCallback(async (node) => {
     try {
@@ -65,6 +109,31 @@ export default function App() {
       console.error('Failed to read file:', err);
     }
   }, [readFile]);
+
+  // Auto-restore the last opened file when the file tree loads
+  useEffect(() => {
+    if (hasRestoredFile.current || !fileTree || fileTree.length === 0) return;
+    const lastPath = localStorage.getItem('lastFilePath');
+    if (!lastPath) return;
+
+    // Walk the tree to find the node matching lastPath
+    const findNode = (nodes) => {
+      for (const node of nodes) {
+        if (node.kind === 'file' && node.path === lastPath) return node;
+        if (node.children) {
+          const found = findNode(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const node = findNode(fileTree);
+    if (node) {
+      hasRestoredFile.current = true;
+      handleFileClick(node);
+    }
+  }, [fileTree, handleFileClick]);
 
   const handleSave = useCallback(async () => {
     if (!activeFile) return;
@@ -229,6 +298,8 @@ export default function App() {
           onCreateFolder={handleCreateFolder}
           onChangeVault={pickDirectory}
           onTrash={handleTrash}
+          expandedPaths={expandedPaths}
+          onToggleExpand={handleToggleExpand}
         />
         <div className="theme-toggle-container">
           <button
@@ -248,6 +319,16 @@ export default function App() {
             )}
           </button>
         </div>
+        <div className="sidebar-bottom-actions">
+          <button
+            className="theme-toggle-btn settings-btn"
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+          >
+            <Settings size={16} />
+            Settings
+          </button>
+        </div>
       </div>
       <div className="workspace-resize-handle" onMouseDown={startResize} />
       <div className="workspace-main">
@@ -261,6 +342,15 @@ export default function App() {
           onSave={handleSave}
         />
       </div>
+      {showSettings && (
+        <SettingsPanel
+          editorFontSize={editorFontSize}
+          treeFontSize={treeFontSize}
+          onEditorFontSizeChange={setEditorFontSize}
+          onTreeFontSizeChange={setTreeFontSize}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   );
 }

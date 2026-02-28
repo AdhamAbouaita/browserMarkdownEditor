@@ -9,7 +9,7 @@ export const obsidianDarkTheme = EditorView.theme({
     '&': {
         backgroundColor: '#1e1e1e',
         color: '#dcddde',
-        fontSize: '16px',
+        fontSize: 'var(--font-size-normal)',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "Roboto", sans-serif',
         height: '100%',
     },
@@ -89,7 +89,7 @@ export const obsidianLightTheme = EditorView.theme({
     '&': {
         backgroundColor: '#ffffff',
         color: '#2e3338',
-        fontSize: '16px',
+        fontSize: 'var(--font-size-normal)',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "Roboto", sans-serif',
         height: '100%',
     },

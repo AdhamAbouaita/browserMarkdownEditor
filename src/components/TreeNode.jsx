@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronRight, ChevronDown, FileText, FolderIcon, FilePlus, FolderPlus, Trash2 } from './icons.jsx';
 
-export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, onTrash, depth = 0 }) {
-    const [expanded, setExpanded] = useState(false);
-
+export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, onTrash, expandedPaths, onToggleExpand, depth = 0 }) {
     const isActive = node.kind === 'file' && node.path === activeFilePath;
     const paddingLeft = 12 + depth * 16;
+    const expanded = expandedPaths.has(node.path);
 
     if (node.kind === 'file') {
         return (
@@ -36,7 +35,7 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
             <div
                 className="tree-item tree-folder"
                 style={{ paddingLeft }}
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => onToggleExpand(node.path)}
             >
                 <span className="tree-item-chevron">
                     {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -73,6 +72,8 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
                             onCreateFile={onCreateFile}
                             onCreateFolder={onCreateFolder}
                             onTrash={onTrash}
+                            expandedPaths={expandedPaths}
+                            onToggleExpand={onToggleExpand}
                             depth={depth + 1}
                         />
                     ))}
