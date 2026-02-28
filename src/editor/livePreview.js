@@ -46,9 +46,16 @@ function buildDecorations(view, getAssetUrl, editorMode) {
                 const level = parseInt(name[10], 10);
                 if (!level || level < 1 || level > 6) return;
 
-                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return; // Show raw when cursor is on this line
-
                 const line = state.doc.lineAt(from);
+
+                // Always style the entire heading line so it retains its size
+                decorations.push(
+                    Decoration.line({ class: `cm-live-heading cm-live-heading-${level}` }).range(line.from)
+                );
+
+                // If editing and cursor is on the line, let the raw prefix `# ` show
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
+
                 const headerText = line.text;
                 const hashEnd = headerText.indexOf(' ') + 1; // position after "# "
 
@@ -59,47 +66,30 @@ function buildDecorations(view, getAssetUrl, editorMode) {
                     );
                 }
 
-                // Style the entire heading line
-                decorations.push(
-                    Decoration.line({ class: `cm-live-heading cm-live-heading-${level}` }).range(line.from)
-                );
-
                 return false; // Don't recurse into heading children
             }
 
-            // === EMPHASIS (italic) ===
-            if (name === 'Emphasis') {
-                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+            // === EMPHASIS / STRONG (Asterisks handling via EmphasisMark) ===
+            if (name === 'EmphasisMark') {
+                const parent = node.node.parent;
+                if (!parent) return;
 
-                const content = state.doc.sliceString(from, to);
-                const delimiter = content[0]; // * or _
-                const delimLen = 1;
+                // Check if the cursor is anywhere within the entire Emphasis / Strong container
+                if (editorMode !== 'read' && cursorInRange(state, parent.from, parent.to)) return;
 
-                // Hide opening delimiter
-                decorations.push(Decoration.replace({}).range(from, from + delimLen));
-                // Hide closing delimiter
-                decorations.push(Decoration.replace({}).range(to - delimLen, to));
-                // Style inner content
-                decorations.push(
-                    Decoration.mark({ class: 'cm-live-italic' }).range(from + delimLen, to - delimLen)
-                );
-
+                // If not, hide the markdown tokens entirely
+                decorations.push(Decoration.replace({}).range(from, to));
                 return false;
             }
 
-            // === STRONG (bold) ===
+            // Apply underlying styles to the containers themselves
+            if (name === 'Emphasis') {
+                decorations.push(Decoration.mark({ class: 'cm-live-italic' }).range(from, to));
+                return; // Let the iteration naturally reach the EmphasisMark children
+            }
             if (name === 'StrongEmphasis') {
-                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
-
-                // Hide ** or __ on both sides
-                decorations.push(Decoration.replace({}).range(from, from + 2));
-                decorations.push(Decoration.replace({}).range(to - 2, to));
-                // Style inner content
-                decorations.push(
-                    Decoration.mark({ class: 'cm-live-bold' }).range(from + 2, to - 2)
-                );
-
-                return false;
+                decorations.push(Decoration.mark({ class: 'cm-live-bold' }).range(from, to));
+                return;
             }
 
             // === STRIKETHROUGH ===

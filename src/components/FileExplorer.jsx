@@ -10,6 +10,7 @@ export default function FileExplorer({
     onCreateFile,
     onCreateFolder,
     onChangeVault,
+    onTrash
 }) {
     const [creatingInRoot, setCreatingInRoot] = useState(null); // 'file' | 'folder' | null
     const inputRef = useRef(null);
@@ -100,6 +101,7 @@ export default function FileExplorer({
                             const name = prompt('Enter folder name:');
                             if (name) onCreateFolder(handle, name);
                         }}
+                        onTrash={onTrash}
                     />
                 ))}
             </div>
