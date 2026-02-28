@@ -1,0 +1,338 @@
+import { ViewPlugin, Decoration } from '@codemirror/view';
+import { syntaxTree } from '@codemirror/language';
+import { MathWidget } from './mathWidget.js';
+import { HorizontalRuleWidget } from './hrWidget.js';
+import { ImageWidget } from './imageWidget.js';
+
+/**
+ * Check if the cursor (or any selection) overlaps the range [from, to].
+ */
+function cursorInRange(state, from, to) {
+    for (const range of state.selection.ranges) {
+        if (range.from <= to && range.to >= from) return true;
+    }
+    return false;
+}
+
+/**
+ * Check if the cursor is on the same line as the given position range.
+ */
+function cursorOnLine(state, from, to) {
+    const lineFrom = state.doc.lineAt(from).number;
+    const lineTo = state.doc.lineAt(to).number;
+    for (const range of state.selection.ranges) {
+        const cursorLine = state.doc.lineAt(range.head).number;
+        if (cursorLine >= lineFrom && cursorLine <= lineTo) return true;
+    }
+    return false;
+}
+
+/**
+ * The Live Preview plugin — hides markdown syntax when cursor is away
+ * and renders styled content, KaTeX math widgets, and Image widgets.
+ */
+function buildDecorations(view, getAssetUrl, editorMode) {
+    const { state } = view;
+    const decorations = [];
+
+    syntaxTree(state).iterate({
+        enter(node) {
+            const { type, from, to } = node;
+            const name = type.name;
+
+            // === HEADINGS ===
+            // ATXHeading1 through ATXHeading6
+            if (name.startsWith('ATXHeading') && name.length === 11) {
+                const level = parseInt(name[10], 10);
+                if (!level || level < 1 || level > 6) return;
+
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return; // Show raw when cursor is on this line
+
+                const line = state.doc.lineAt(from);
+                const headerText = line.text;
+                const hashEnd = headerText.indexOf(' ') + 1; // position after "# "
+
+                if (hashEnd > 0) {
+                    // Hide the "# " prefix
+                    decorations.push(
+                        Decoration.replace({}).range(line.from, line.from + hashEnd)
+                    );
+                }
+
+                // Style the entire heading line
+                decorations.push(
+                    Decoration.line({ class: `cm-live-heading cm-live-heading-${level}` }).range(line.from)
+                );
+
+                return false; // Don't recurse into heading children
+            }
+
+            // === EMPHASIS (italic) ===
+            if (name === 'Emphasis') {
+                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+
+                const content = state.doc.sliceString(from, to);
+                const delimiter = content[0]; // * or _
+                const delimLen = 1;
+
+                // Hide opening delimiter
+                decorations.push(Decoration.replace({}).range(from, from + delimLen));
+                // Hide closing delimiter
+                decorations.push(Decoration.replace({}).range(to - delimLen, to));
+                // Style inner content
+                decorations.push(
+                    Decoration.mark({ class: 'cm-live-italic' }).range(from + delimLen, to - delimLen)
+                );
+
+                return false;
+            }
+
+            // === STRONG (bold) ===
+            if (name === 'StrongEmphasis') {
+                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+
+                // Hide ** or __ on both sides
+                decorations.push(Decoration.replace({}).range(from, from + 2));
+                decorations.push(Decoration.replace({}).range(to - 2, to));
+                // Style inner content
+                decorations.push(
+                    Decoration.mark({ class: 'cm-live-bold' }).range(from + 2, to - 2)
+                );
+
+                return false;
+            }
+
+            // === STRIKETHROUGH ===
+            if (name === 'Strikethrough') {
+                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+
+                decorations.push(Decoration.replace({}).range(from, from + 2));
+                decorations.push(Decoration.replace({}).range(to - 2, to));
+                decorations.push(
+                    Decoration.mark({ class: 'cm-live-strikethrough' }).range(from + 2, to - 2)
+                );
+
+                return false;
+            }
+
+            // === INLINE CODE ===
+            if (name === 'InlineCode') {
+                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+
+                // Find backtick boundaries
+                const content = state.doc.sliceString(from, to);
+                const openTicks = content.match(/^`+/)?.[0].length || 1;
+                const closeTicks = openTicks;
+
+                decorations.push(Decoration.replace({}).range(from, from + openTicks));
+                decorations.push(Decoration.replace({}).range(to - closeTicks, to));
+                decorations.push(
+                    Decoration.mark({ class: 'cm-live-code' }).range(from + openTicks, to - closeTicks)
+                );
+
+                return false;
+            }
+
+            // === FENCED CODE BLOCKS ===
+            if (name === 'FencedCode') {
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
+
+                // Hide the opening markers (e.g. ```javascript)
+                // In lezer-markdown, CodeMark is the ``` and CodeInfo is the language info.
+                // It's easiest to just hide the first line, and the last line.
+                const startLine = state.doc.lineAt(from);
+                const endLine = state.doc.lineAt(to);
+
+                // Hide opening line completely if it starts with ```
+                if (startLine.text.trim().startsWith('```')) {
+                    decorations.push(Decoration.replace({}).range(startLine.from, startLine.to));
+                }
+
+                // Hide closing line completely if it starts with ```
+                if (endLine.text.trim().startsWith('```')) {
+                    decorations.push(Decoration.replace({}).range(endLine.from, endLine.to));
+                }
+
+                // Apply codeblock styling to all lines within the block
+                for (let i = startLine.number; i <= endLine.number; i++) {
+                    const line = state.doc.line(i);
+                    // Don't style the marker lines if they are hidden anyway,
+                    // but we do style the inner contents.
+                    if (i > startLine.number && i < endLine.number) {
+                        decorations.push(
+                            Decoration.line({ class: 'cm-live-codeblock' }).range(line.from)
+                        );
+                    }
+                }
+
+                return false;
+            }
+
+            // === LINKS ===
+            if (name === 'Link') {
+                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
+
+                const content = state.doc.sliceString(from, to);
+                const match = content.match(/^\[([^\]]*)\]\(([^)]*)\)$/);
+                if (!match) return;
+
+                const linkText = match[1];
+                const linkTextStart = from + 1; // after [
+                const linkTextEnd = linkTextStart + linkText.length;
+
+                // Hide [
+                decorations.push(Decoration.replace({}).range(from, from + 1));
+                // Hide ](url)
+                decorations.push(Decoration.replace({}).range(linkTextEnd, to));
+                // Style link text
+                decorations.push(
+                    Decoration.mark({ class: 'cm-live-link' }).range(linkTextStart, linkTextEnd)
+                );
+
+                return false;
+            }
+
+            // === BLOCKQUOTE ===
+            if (name === 'Blockquote') {
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
+
+                // Apply blockquote styling to each line in the quote
+                const startLine = state.doc.lineAt(from).number;
+                const endLine = state.doc.lineAt(to).number;
+
+                for (let i = startLine; i <= endLine; i++) {
+                    const line = state.doc.line(i);
+                    const lineText = line.text;
+                    const quotePrefix = lineText.match(/^>\s?/);
+                    if (quotePrefix) {
+                        // Hide "> " prefix
+                        decorations.push(Decoration.replace({}).range(line.from, line.from + quotePrefix[0].length));
+                    }
+                    // Style the line
+                    decorations.push(
+                        Decoration.line({ class: 'cm-live-blockquote' }).range(line.from)
+                    );
+                }
+
+                return false;
+            }
+
+            // === HORIZONTAL RULE ===
+            if (name === 'HorizontalRule') {
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
+
+                decorations.push(
+                    Decoration.replace({ widget: new HorizontalRuleWidget() }).range(from, to)
+                );
+
+                return false;
+            }
+        },
+    });
+
+    // === MATH (LaTeX) — regex-based since CM6 markdown parser doesn't natively parse $ ===
+    const doc = state.doc.toString();
+
+    // Block math: $$...$$
+    const blockMathRegex = /\$\$([\s\S]+?)\$\$/g;
+    let match;
+    while ((match = blockMathRegex.exec(doc)) !== null) {
+        const from = match.index;
+        const to = from + match[0].length;
+        const latex = match[1].trim();
+
+        if (editorMode !== 'read' && cursorInRange(state, from, to)) continue;
+
+        decorations.push(
+            Decoration.replace({ widget: new MathWidget(latex, true) }).range(from, to)
+        );
+    }
+
+    // Inline math: $...$ (but not $$)
+    const inlineMathRegex = /(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)/g;
+    while ((match = inlineMathRegex.exec(doc)) !== null) {
+        const from = match.index;
+        const to = from + match[0].length;
+        const latex = match[1];
+
+        // Skip if overlapping with a block math range
+        let overlapsBlock = false;
+        const blockMathRegex2 = /\$\$([\s\S]+?)\$\$/g;
+        let bm;
+        while ((bm = blockMathRegex2.exec(doc)) !== null) {
+            if (from >= bm.index && to <= bm.index + bm[0].length) {
+                overlapsBlock = true;
+                break;
+            }
+        }
+        if (overlapsBlock) continue;
+
+        if (editorMode !== 'read' && cursorInRange(state, from, to)) continue;
+
+        decorations.push(
+            Decoration.replace({ widget: new MathWidget(latex, false) }).range(from, to)
+        );
+    }
+
+    // === HIGHLIGHTS (==text==) ===
+    // Matches: ==highlighted text==
+    const highlightRegex = /(?<!=)==(?!=)(.+?)(?<!=)==(?!=)/g;
+    while ((match = highlightRegex.exec(doc)) !== null) {
+        const from = match.index;
+        const to = from + match[0].length;
+        const text = match[1];
+
+        // Skip if overlaps with a math block or code block (simplified code checks to avoid parsing overlap)
+        if (editorMode !== 'read' && cursorInRange(state, from, to)) continue;
+
+        // Hide ==
+        decorations.push(Decoration.replace({}).range(from, from + 2));
+        decorations.push(Decoration.replace({}).range(to - 2, to));
+        // Style inner content
+        decorations.push(
+            Decoration.mark({ class: 'cm-live-highlight' }).range(from + 2, to - 2)
+        );
+    }
+
+    // === IMAGES (Obsidian Syntax) ===
+    // Matches: ![[filename.png]] or ![[filename.png | width]]
+    // Group 1: filename, Group 2: width (optional)
+    const imageRegex = /!\[\[([^\]|]+)(?:\s*\|\s*(\d+))?\]\]/g;
+    while ((match = imageRegex.exec(doc)) !== null) {
+        const from = match.index;
+        const to = from + match[0].length;
+        const filename = match[1].trim();
+        const width = match[2] ? parseInt(match[2].trim(), 10) : null;
+
+        if (editorMode !== 'read' && cursorInRange(state, from, to)) continue;
+
+        decorations.push(
+            Decoration.replace({ widget: new ImageWidget(filename, width, getAssetUrl) }).range(from, to)
+        );
+    }
+
+    return Decoration.set(decorations, true);
+}
+
+/**
+ * Factory for creating the Live Preview CM6 extension.
+ * Needs to be a factory so we can pass the getAssetUrl Context function into the widgets.
+ */
+export function createLivePreviewPlugin(getAssetUrl, editorMode) {
+    return ViewPlugin.fromClass(
+        class {
+            constructor(view) {
+                this.decorations = buildDecorations(view, getAssetUrl, editorMode);
+            }
+
+            update(update) {
+                if (update.docChanged || update.selectionSet || update.viewportChanged) {
+                    this.decorations = buildDecorations(update.view, getAssetUrl, editorMode);
+                }
+            }
+        },
+        {
+            decorations: (v) => v.decorations,
+        }
+    );
+}

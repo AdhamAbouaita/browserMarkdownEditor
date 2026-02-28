@@ -1,0 +1,684 @@
+/* =============================================================
+   Obsidian Dark Theme — Exact Clone
+   CSS Variables sourced from Obsidian's default dark theme.
+   ============================================================= */
+
+:root {
+  /* ── Base Colors ── */
+  --background-primary: #1e1e1e;
+  --background-primary-alt: #252525;
+  --background-secondary: #202020;
+  --background-secondary-alt: #1a1a1a;
+  --background-modifier-border: #363636;
+  --background-modifier-hover: #2a2d2e;
+  --background-modifier-active: #353535;
+
+  /* ── Text ── */
+  --text-normal: #dcddde;
+  --text-muted: #999;
+  --text-faint: #666;
+  --text-accent: hsl(254, 80%, 68%);
+  --text-on-accent: #fff;
+  --text-highlight-bg: rgba(255, 208, 0, 0.4);
+
+  /* ── Interactive / Accent ── */
+  --interactive-accent: hsl(254, 80%, 68%);
+  --interactive-accent-hover: hsl(254, 80%, 60%);
+  --interactive-normal: #2a2a2a;
+  --interactive-hover: #353535;
+
+  /* ── Scrollbar ── */
+  --scrollbar-bg: transparent;
+  --scrollbar-thumb-bg: rgba(255, 255, 255, 0.1);
+  --scrollbar-active-thumb: rgba(255, 255, 255, 0.18);
+
+  /* ── Typography ── */
+  --font-text: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "Roboto", sans-serif;
+  --font-monospace: "SF Mono", "Menlo", "Monaco", "Consolas", "Courier New", monospace;
+  --font-ui: var(--font-text);
+  --font-size-normal: 16px;
+  --nav-item-size: 13px;
+
+  /* ── Sizing ── */
+  --nav-item-height: 28px;
+  --header-height: 36px;
+  --radius-s: 4px;
+  --radius-m: 6px;
+}
+
+/* =============================================================
+   Light Theme Overrides
+   ============================================================= */
+:root[data-theme="light"] {
+  /* ── Base Colors ── */
+  --background-primary: #ffffff;
+  --background-primary-alt: #f2f3f5;
+  --background-secondary: #f2f3f5;
+  --background-secondary-alt: #e3e5e8;
+  --background-modifier-border: #dadce0;
+  --background-modifier-hover: rgba(0, 0, 0, 0.04);
+  --background-modifier-active: rgba(0, 0, 0, 0.08);
+
+  /* ── Text ── */
+  --text-normal: #2e3338;
+  --text-muted: #5c5f66;
+  --text-faint: #999999;
+  --text-accent: hsl(254, 80%, 60%);
+  --text-on-accent: #fff;
+  --text-highlight-bg: rgba(255, 208, 0, 0.4);
+
+  /* ── Interactive / Accent ── */
+  --interactive-accent: hsl(254, 80%, 60%);
+  --interactive-accent-hover: hsl(254, 80%, 52%);
+  --interactive-normal: #e3e5e8;
+  --interactive-hover: #dadce0;
+
+  /* ── Scrollbar ── */
+  --scrollbar-bg: transparent;
+  --scrollbar-thumb-bg: rgba(0, 0, 0, 0.1);
+  --scrollbar-active-thumb: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--font-size-normal);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars (Obsidian thin style) ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-active-thumb);
+}
+
+/* =============================================================
+   Welcome Screen
+   ============================================================= */
+.welcome-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--background-primary);
+}
+
+.welcome-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.welcome-icon {
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+
+.welcome-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.welcome-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.welcome-btn {
+  margin-top: 12px;
+  padding: 8px 28px;
+  font-size: 14px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.welcome-btn:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* =============================================================
+   Workspace Layout
+   ============================================================= */
+.workspace {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.workspace-sidebar {
+  flex-shrink: 0;
+  background: var(--background-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--background-modifier-border);
+}
+
+.workspace-resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.workspace-resize-handle:hover,
+.workspace-resize-handle:active {
+  background: var(--interactive-accent);
+}
+
+.workspace-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--background-primary);
+}
+
+/* =============================================================
+   File Explorer (Sidebar)
+   ============================================================= */
+.file-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 14px;
+  height: var(--header-height);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.nav-header-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-header-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.nav-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.nav-action-btn:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.nav-files-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* =============================================================
+   Tree Items
+   ============================================================= */
+.tree-item {
+  display: flex;
+  align-items: center;
+  height: var(--nav-item-height);
+  padding-right: 8px;
+  cursor: pointer;
+  font-size: var(--nav-item-size);
+  color: var(--text-muted);
+  border-radius: 0;
+  transition: background 0.08s, color 0.08s;
+  user-select: none;
+  position: relative;
+}
+
+.tree-item:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.tree-item.is-active {
+  background: var(--background-modifier-active);
+  color: var(--text-normal);
+}
+
+.tree-item-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  margin-right: 0;
+}
+
+.tree-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.file-icon {
+  color: var(--text-faint);
+}
+
+.folder-icon {
+  color: var(--text-faint);
+}
+
+.tree-item:hover .file-icon,
+.tree-item:hover .folder-icon {
+  color: var(--text-muted);
+}
+
+.tree-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--nav-item-height);
+}
+
+.tree-item-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+
+.tree-item:hover .tree-item-actions {
+  opacity: 1;
+}
+
+.tree-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.tree-action-btn:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+/* Inline rename/create input */
+.tree-inline-input {
+  height: var(--nav-item-height);
+  padding-right: 8px;
+}
+
+.inline-rename-input {
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  font-size: var(--nav-item-size);
+  font-family: var(--font-ui);
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--interactive-accent);
+  border-radius: var(--radius-s);
+  outline: none;
+}
+
+/* =============================================================
+   Editor Pane
+   ============================================================= */
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 16px;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.view-header-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-status {
+  font-size: 11px;
+  color: var(--text-accent);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.view-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+/* CodeMirror 6 container */
+.view-content .cm-editor {
+  height: 100%;
+  width: 100%;
+  outline: none;
+}
+
+.view-content .cm-editor .cm-scroller {
+  overflow: auto;
+}
+
+/* Readable Line Length constraints */
+.view-content .cm-editor .cm-content {
+  max-width: 900px;
+  /* Restrict max readable length */
+  margin: 0 auto;
+  /* Center it */
+  padding-left: 6%;
+  /* Responsive padding to prevent edge collision */
+  padding-right: 6%;
+}
+
+/* ── Theme Toggle ── */
+.theme-toggle-container {
+  padding: 8px 14px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-s);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* ── Empty state ── */
+.editor-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editor-empty-inner {
+  text-align: center;
+}
+
+.editor-empty-title {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.editor-empty-hint {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* =============================================================
+   Live Preview — Styled Markdown Elements
+   ============================================================= */
+
+/* ── Headings ── */
+.cm-live-heading {
+  line-height: 1.3;
+}
+
+.cm-live-heading-1 {
+  font-size: 2em;
+  font-weight: 700;
+  padding: 8px 0 4px;
+}
+
+.cm-live-heading-2 {
+  font-size: 1.6em;
+  font-weight: 600;
+  padding: 6px 0 3px;
+}
+
+.cm-live-heading-3 {
+  font-size: 1.37em;
+  font-weight: 600;
+  padding: 4px 0 2px;
+}
+
+.cm-live-heading-4 {
+  font-size: 1.17em;
+  font-weight: 600;
+  padding: 2px 0 1px;
+}
+
+.cm-live-heading-5 {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+
+.cm-live-heading-6 {
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ── Inline Formatting ── */
+.cm-live-bold {
+  font-weight: 700;
+}
+
+.cm-live-italic {
+  font-style: italic;
+}
+
+.cm-live-strikethrough {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.cm-live-code {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  background: var(--background-modifier-hover);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: #e06c75;
+}
+
+/* ── Fenced Code Blocks ── */
+.cm-live-codeblock {
+  background-color: var(--background-modifier-hover);
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  padding: 0 4px;
+  /* CM ensures line bounds, we just add slight visual distinction */
+}
+
+:root[data-theme="light"] .cm-live-code {
+  color: #d14;
+}
+
+:root[data-theme="light"] .cm-live-codeblock {
+  color: #2e3338;
+}
+
+/* ── Highlights ── */
+.cm-live-highlight {
+  background-color: var(--text-highlight-bg);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* ── Images ── */
+.cm-image-widget {
+  display: block;
+  margin: 16px 0;
+}
+
+.cm-image-wrapper {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.cm-image-wrapper img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-m);
+}
+
+.cm-image-placeholder {
+  display: inline-block;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.cm-image-placeholder.error {
+  color: #e06c75;
+  border-color: rgba(224, 108, 117, 0.3);
+  background: rgba(224, 108, 117, 0.1);
+}
+
+.cm-live-link {
+  color: var(--text-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Blockquote ── */
+.cm-live-blockquote {
+  border-left: 3px solid var(--interactive-accent);
+  padding-left: 12px !important;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Horizontal Rule ── */
+.cm-hr-widget {
+  height: 1px;
+  background: var(--background-modifier-border);
+  margin: 16px 0;
+}
+
+/* ── Math (KaTeX) ── */
+.cm-math-widget {
+  color: var(--text-normal);
+}
+
+.cm-math-inline {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.cm-math-block {
+  display: block;
+  text-align: center;
+  padding: 12px 0;
+  overflow-x: auto;
+}
+
+.cm-math-error {
+  color: #e06c75;
+  font-family: var(--font-monospace);
+  font-size: 0.85em;
+}
