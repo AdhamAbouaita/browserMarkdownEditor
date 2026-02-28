@@ -63,11 +63,11 @@ export const obsidianDarkTheme = EditorView.theme({
  * Syntax highlighting matching Obsidian's colors.
  */
 export const obsidianHighlightStyle = syntaxHighlighting(HighlightStyle.define([
-    { tag: tags.heading1, fontWeight: '700', fontSize: '1.6em', color: '#dcddde' },
-    { tag: tags.heading2, fontWeight: '600', fontSize: '1.4em', color: '#dcddde' },
-    { tag: tags.heading3, fontWeight: '600', fontSize: '1.2em', color: '#dcddde' },
-    { tag: tags.heading4, fontWeight: '600', fontSize: '1.1em', color: '#dcddde' },
-    { tag: tags.heading5, fontWeight: '600', fontSize: '1.05em', color: '#dcddde' },
+    { tag: tags.heading1, fontWeight: '700', fontSize: '1.3em', color: '#dcddde' },
+    { tag: tags.heading2, fontWeight: '600', fontSize: '1.2em', color: '#dcddde' },
+    { tag: tags.heading3, fontWeight: '600', fontSize: '1.12em', color: '#dcddde' },
+    { tag: tags.heading4, fontWeight: '600', fontSize: '1.05em', color: '#dcddde' },
+    { tag: tags.heading5, fontWeight: '600', fontSize: '1em', color: '#dcddde' },
     { tag: tags.heading6, fontWeight: '600', fontSize: '1em', color: '#999' },
     { tag: tags.strong, fontWeight: '700', color: '#dcddde' },
     { tag: tags.emphasis, fontStyle: 'italic', color: '#dcddde' },
@@ -143,11 +143,11 @@ export const obsidianLightTheme = EditorView.theme({
  * Syntax highlighting matching Obsidian's light colors.
  */
 export const obsidianLightHighlightStyle = syntaxHighlighting(HighlightStyle.define([
-    { tag: tags.heading1, fontWeight: '700', fontSize: '1.6em', color: '#2e3338' },
-    { tag: tags.heading2, fontWeight: '600', fontSize: '1.4em', color: '#2e3338' },
-    { tag: tags.heading3, fontWeight: '600', fontSize: '1.2em', color: '#2e3338' },
-    { tag: tags.heading4, fontWeight: '600', fontSize: '1.1em', color: '#2e3338' },
-    { tag: tags.heading5, fontWeight: '600', fontSize: '1.05em', color: '#2e3338' },
+    { tag: tags.heading1, fontWeight: '700', fontSize: '1.3em', color: '#2e3338' },
+    { tag: tags.heading2, fontWeight: '600', fontSize: '1.2em', color: '#2e3338' },
+    { tag: tags.heading3, fontWeight: '600', fontSize: '1.12em', color: '#2e3338' },
+    { tag: tags.heading4, fontWeight: '600', fontSize: '1.05em', color: '#2e3338' },
+    { tag: tags.heading5, fontWeight: '600', fontSize: '1em', color: '#2e3338' },
     { tag: tags.heading6, fontWeight: '600', fontSize: '1em', color: '#5c5f66' },
     { tag: tags.strong, fontWeight: '700', color: '#2e3338' },
     { tag: tags.emphasis, fontStyle: 'italic', color: '#2e3338' },
