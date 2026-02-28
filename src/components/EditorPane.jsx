@@ -21,11 +21,22 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
     const readOnlyCompartmentRef = useRef(new Compartment());
     const livePreviewCompartmentRef = useRef(new Compartment());
     const onContentChangeRef = useRef(onContentChange);
+    const activeFileRef = useRef(activeFile);
 
     // Keep the callback ref up-to-date without re-creating the editor
     useEffect(() => {
         onContentChangeRef.current = onContentChange;
     }, [onContentChange]);
+
+    useEffect(() => {
+        activeFileRef.current = activeFile;
+    }, [activeFile]);
+
+    // Create a bound version of getAssetUrl that includes the active file's parent handle
+    const boundGetAssetUrl = useRef((fileName) => getAssetUrl(fileName, null));
+    useEffect(() => {
+        boundGetAssetUrl.current = (fileName) => getAssetUrl(fileName, activeFile?.parentHandle || null);
+    }, [activeFile, getAssetUrl]);
 
     // Use a callback ref to initialize CodeMirror as soon as the container is mounted in the DOM.
     const setEditorContainer = (node) => {
@@ -55,7 +66,7 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                         ...searchKeymap,
                     ]),
                     readOnlyCompartmentRef.current.of(EditorView.editable.of(editorMode !== 'read')),
-                    livePreviewCompartmentRef.current.of(createLivePreviewPlugin(getAssetUrl, editorMode)),
+                    livePreviewCompartmentRef.current.of(createLivePreviewPlugin((fn) => boundGetAssetUrl.current(fn), editorMode)),
                     markdownFormatKeymap,
                     updateListener,
                     EditorView.domEventHandlers({
@@ -85,8 +96,9 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                                     }
                                     const filename = `Pasted image ${timestamp}${ext}`;
 
-                                    // Save the asset
-                                    saveAsset(filename, blob).then(() => {
+                                    // Save the asset to the local .Assets folder (sibling of the active file)
+                                    const parentHandle = activeFileRef.current?.parentHandle || null;
+                                    saveAsset(filename, blob, parentHandle).then(() => {
                                         // Insert the markdown at cursor
                                         const insertText = `![[${filename}]]\n`;
                                         const ranges = view.state.selection.ranges;
@@ -99,7 +111,7 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                                         }
                                     }).catch(err => {
                                         console.error('Failed to save pasted image:', err);
-                                        alert('Failed to save image to Assets folder.');
+                                        alert('Failed to save image to .Assets folder.');
                                     });
 
                                     return true; // We handled the paste
@@ -158,18 +170,18 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
         }
     }, [theme]);
 
-    // Update read-only & live-preview rules when mode changes
+    // Update read-only & live-preview rules when mode or active file changes
     useEffect(() => {
         const view = viewRef.current;
         if (view) {
             view.dispatch({
                 effects: [
                     readOnlyCompartmentRef.current.reconfigure(EditorView.editable.of(editorMode !== 'read')),
-                    livePreviewCompartmentRef.current.reconfigure(createLivePreviewPlugin(getAssetUrl, editorMode))
+                    livePreviewCompartmentRef.current.reconfigure(createLivePreviewPlugin((fn) => boundGetAssetUrl.current(fn), editorMode))
                 ]
             });
         }
-    }, [editorMode, getAssetUrl]);
+    }, [editorMode, activeFile]);
 
     if (!activeFile) {
         return (
