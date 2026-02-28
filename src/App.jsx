@@ -15,6 +15,7 @@ export default function App() {
     createFile,
     createFolder,
     restoreVault,
+    moveToTrash,
   } = useFileSystem();
 
   const [activeFile, setActiveFile] = useState(null);
@@ -49,6 +50,13 @@ export default function App() {
 
   const handleFileClick = useCallback(async (node) => {
     try {
+      if (node.name.toLowerCase().endsWith('.pdf')) {
+        const file = await node.handle.getFile();
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+        return;
+      }
+
       const content = await readFile(node.handle);
       setActiveFile(node);
       setFileContent(content);
@@ -85,6 +93,18 @@ export default function App() {
       console.error('Failed to create folder:', err);
     }
   }, [createFolder]);
+
+  const handleTrash = useCallback(async (node) => {
+    if (confirm(`Move "${node.name}" to Trash?`)) {
+      const moved = await moveToTrash(node);
+      if (moved && activeFileRef.current?.path === node.path) {
+        // If we deleted the file we are currently looking at, clear the editor
+        setActiveFile(null);
+        setFileContent('');
+        setSaveStatus('');
+      }
+    }
+  }, [moveToTrash]);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -208,6 +228,7 @@ export default function App() {
           onCreateFile={handleCreateFile}
           onCreateFolder={handleCreateFolder}
           onChangeVault={pickDirectory}
+          onTrash={handleTrash}
         />
         <div className="theme-toggle-container">
           <button

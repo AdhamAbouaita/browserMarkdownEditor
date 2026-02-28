@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, FileText, FolderIcon, FilePlus, FolderPlus } from './icons.jsx';
+import { ChevronRight, ChevronDown, FileText, FolderIcon, FilePlus, FolderPlus, Trash2 } from './icons.jsx';
 
-export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, depth = 0 }) {
+export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, onTrash, depth = 0 }) {
     const [expanded, setExpanded] = useState(false);
 
     const isActive = node.kind === 'file' && node.path === activeFilePath;
@@ -18,6 +18,15 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
                     <FileText size={14} />
                 </span>
                 <span className="tree-item-label">{node.name}</span>
+                <span className="tree-item-actions">
+                    <button
+                        className="tree-action-btn trash-btn"
+                        title="Move to Trash"
+                        onClick={(e) => { e.stopPropagation(); onTrash(node); }}
+                    >
+                        <Trash2 size={13} />
+                    </button>
+                </span>
             </div>
         );
     }
@@ -63,6 +72,7 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
                             onFileClick={onFileClick}
                             onCreateFile={onCreateFile}
                             onCreateFolder={onCreateFolder}
+                            onTrash={onTrash}
                             depth={depth + 1}
                         />
                     ))}
