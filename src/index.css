@@ -679,6 +679,43 @@ body {
   color: var(--text-muted);
 }
 
+/* ── Table Widget ── */
+.cm-table-widget {
+  margin: 8px 0;
+  overflow-x: auto;
+}
+
+.cm-table-widget table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.cm-table-widget th,
+.cm-table-widget td {
+  border: 1px solid var(--background-modifier-border);
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.cm-table-widget th {
+  font-weight: 600;
+  background: var(--background-secondary);
+}
+
+.cm-table-widget tr:nth-child(even) td {
+  background: var(--background-primary-alt);
+}
+
+.cm-table-widget code {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--background-modifier-active);
+}
+
 /* ── Inline Formatting ── */
 .cm-live-bold {
   font-weight: 700;
