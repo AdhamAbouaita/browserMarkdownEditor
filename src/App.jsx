@@ -26,7 +26,7 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState('');
 
   // Editor mode ('edit' or 'read')
-  const [editorMode, setEditorMode] = useState('edit');
+  const [editorMode, setEditorMode] = useState('read');
 
   // The global light/dark theme state
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
@@ -108,10 +108,10 @@ export default function App() {
   const handleFileClick = useCallback(async (node) => {
     try {
       const lowerName = node.name.toLowerCase();
-      if (lowerName.endsWith('.pdf') || 
-          lowerName.endsWith('.jpg') || 
-          lowerName.endsWith('.jpeg') || 
-          lowerName.endsWith('.png')) {
+      if (lowerName.endsWith('.pdf') ||
+        lowerName.endsWith('.jpg') ||
+        lowerName.endsWith('.jpeg') ||
+        lowerName.endsWith('.png')) {
         const file = await node.handle.getFile();
         const url = URL.createObjectURL(file);
         window.open(url, '_blank');
@@ -122,6 +122,7 @@ export default function App() {
       setActiveFile(node);
       setFileContent(content);
       setSaveStatus('');
+      setEditorMode('read');
     } catch (err) {
       console.error('Failed to read file:', err);
     }
@@ -166,11 +167,23 @@ export default function App() {
 
   const handleCreateFile = useCallback(async (parentHandle, name) => {
     try {
-      await createFile(parentHandle, name);
+      const newFileHandle = await createFile(parentHandle, name);
+      // Auto-open the newly created file and switch to edit mode
+      if (newFileHandle) {
+        const newNode = {
+          name: name,
+          handle: newFileHandle,
+          parentHandle: parentHandle,
+          kind: 'file',
+          path: parentHandle ? `${parentHandle.name}/${name}` : name
+        };
+        await handleFileClick(newNode);
+        setEditorMode('edit');
+      }
     } catch (err) {
       console.error('Failed to create file:', err);
     }
-  }, [createFile]);
+  }, [createFile, handleFileClick]);
 
   const handleCreateFolder = useCallback(async (parentHandle, name) => {
     try {
