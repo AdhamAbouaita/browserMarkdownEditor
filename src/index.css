@@ -300,6 +300,16 @@ body {
   color: var(--text-normal);
 }
 
+.tree-item.drag-over {
+  background: rgba(127, 90, 240, 0.15);
+  outline: 1px dashed var(--interactive-accent);
+  outline-offset: -1px;
+}
+
+.tree-item[draggable="true"] {
+  cursor: grab;
+}
+
 .tree-item.is-active {
   background: var(--background-modifier-active);
   color: var(--text-normal);

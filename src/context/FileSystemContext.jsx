@@ -6,6 +6,24 @@ const FileSystemContext = createContext(null);
 const IDB_KEY = 'vault-directory-handle';
 
 /**
+ * Recursively copies all entries from srcDir to destDir.
+ */
+async function copyDirRecursive(srcDir, destDir) {
+    for await (const [name, handle] of srcDir.entries()) {
+        if (handle.kind === 'file') {
+            const file = await handle.getFile();
+            const newFile = await destDir.getFileHandle(name, { create: true });
+            const writable = await newFile.createWritable();
+            await writable.write(file);
+            await writable.close();
+        } else {
+            const newSub = await destDir.getDirectoryHandle(name, { create: true });
+            await copyDirRecursive(handle, newSub);
+        }
+    }
+}
+
+/**
  * Recursively traverses a FileSystemDirectoryHandle and returns a nested tree.
  */
 async function buildFileTree(dirHandle, path = '') {
@@ -273,6 +291,38 @@ export function FileSystemProvider({ children }) {
         }
     }, [rootHandle, refreshTree]);
 
+    /**
+     * Move a file from its current parent to a target directory handle.
+     */
+    const moveFile = useCallback(async (sourceNode, targetDirHandle) => {
+        if (!sourceNode.parentHandle || !targetDirHandle) return false;
+        // Don't move into the same folder
+        if (sourceNode.parentHandle === targetDirHandle) return false;
+
+        try {
+            if (sourceNode.kind === 'file') {
+                // Copy file content to target
+                const file = await sourceNode.handle.getFile();
+                const newHandle = await targetDirHandle.getFileHandle(sourceNode.name, { create: true });
+                const writable = await newHandle.createWritable();
+                await writable.write(file);
+                await writable.close();
+            } else {
+                // For folders: create in target and recursively copy contents
+                const newDir = await targetDirHandle.getDirectoryHandle(sourceNode.name, { create: true });
+                await copyDirRecursive(sourceNode.handle, newDir);
+            }
+
+            // Remove original
+            await sourceNode.parentHandle.removeEntry(sourceNode.name, { recursive: sourceNode.kind === 'directory' });
+            await refreshTree(rootHandle);
+            return true;
+        } catch (err) {
+            console.error('Failed to move item:', err);
+            return false;
+        }
+    }, [rootHandle, refreshTree]);
+
     const value = {
         rootHandle,
         fileTree,
@@ -287,6 +337,7 @@ export function FileSystemProvider({ children }) {
         saveAsset,
         restoreVault,
         moveToTrash,
+        moveFile,
         refreshTree: () => refreshTree(rootHandle),
     };
 

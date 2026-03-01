@@ -12,7 +12,8 @@ export default function FileExplorer({
     onChangeVault,
     onTrash,
     expandedPaths,
-    onToggleExpand
+    onToggleExpand,
+    onMoveFile
 }) {
     const [creatingInRoot, setCreatingInRoot] = useState(null); // 'file' | 'folder' | null
     const inputRef = useRef(null);
@@ -106,6 +107,7 @@ export default function FileExplorer({
                         onTrash={onTrash}
                         expandedPaths={expandedPaths}
                         onToggleExpand={onToggleExpand}
+                        onMoveFile={onMoveFile}
                     />
                 ))}
             </div>

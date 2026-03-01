@@ -1,10 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, FileText, FolderIcon, FilePlus, FolderPlus, Trash2 } from './icons.jsx';
 
-export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, onTrash, expandedPaths, onToggleExpand, depth = 0 }) {
+export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFile, onCreateFolder, onTrash, expandedPaths, onToggleExpand, onMoveFile, depth = 0 }) {
     const isActive = node.kind === 'file' && node.path === activeFilePath;
     const paddingLeft = 12 + depth * 16;
     const expanded = expandedPaths.has(node.path);
+    const [dragOver, setDragOver] = useState(false);
+
+    // ── Drag handlers ──
+    const handleDragStart = (e) => {
+        e.stopPropagation();
+        e.dataTransfer.setData('text/plain', node.path);
+        e.dataTransfer.effectAllowed = 'move';
+        // Store the node in a module-level variable since dataTransfer can't hold objects
+        TreeNode._draggedNode = node;
+    };
+
+    const handleDragOver = (e) => {
+        if (node.kind !== 'directory') return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        setDragOver(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.stopPropagation();
+        setDragOver(false);
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+
+        const draggedNode = TreeNode._draggedNode;
+        if (!draggedNode) return;
+        TreeNode._draggedNode = null;
+
+        // Don't drop into itself or its own parent
+        if (draggedNode.path === node.path) return;
+        // Don't drop a folder into its own descendant
+        if (node.path.startsWith(draggedNode.path + '/')) return;
+
+        if (onMoveFile) {
+            await onMoveFile(draggedNode, node.handle);
+        }
+    };
+
+    const handleDragEnd = () => {
+        TreeNode._draggedNode = null;
+    };
 
     if (node.kind === 'file') {
         return (
@@ -12,6 +58,9 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
                 className={`tree-item tree-file${isActive ? ' is-active' : ''}`}
                 style={{ paddingLeft }}
                 onClick={() => onFileClick(node)}
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
             >
                 <span className="tree-item-icon file-icon">
                     <FileText size={14} />
@@ -33,9 +82,15 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
     return (
         <div className="tree-item-container">
             <div
-                className="tree-item tree-folder"
+                className={`tree-item tree-folder${dragOver ? ' drag-over' : ''}`}
                 style={{ paddingLeft }}
                 onClick={() => onToggleExpand(node.path)}
+                draggable
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
             >
                 <span className="tree-item-chevron">
                     {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -74,6 +129,7 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
                             onTrash={onTrash}
                             expandedPaths={expandedPaths}
                             onToggleExpand={onToggleExpand}
+                            onMoveFile={onMoveFile}
                             depth={depth + 1}
                         />
                     ))}
@@ -82,3 +138,6 @@ export default function TreeNode({ node, activeFilePath, onFileClick, onCreateFi
         </div>
     );
 }
+
+// Module-level storage for the dragged node reference
+TreeNode._draggedNode = null;

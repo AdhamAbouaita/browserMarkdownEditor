@@ -18,6 +18,7 @@ export default function App() {
     createFolder,
     restoreVault,
     moveToTrash,
+    moveFile,
   } = useFileSystem();
 
   const [activeFile, setActiveFile] = useState(null);
@@ -300,6 +301,7 @@ export default function App() {
           onTrash={handleTrash}
           expandedPaths={expandedPaths}
           onToggleExpand={handleToggleExpand}
+          onMoveFile={moveFile}
         />
         <div className="theme-toggle-container">
           <button
