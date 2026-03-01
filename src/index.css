@@ -820,6 +820,30 @@ body {
   cursor: pointer;
 }
 
+/* ── List Items ── */
+.cm-live-list-item {
+  padding-left: calc(24px + var(--list-indent, 0) * 24px) !important;
+  position: relative;
+}
+
+.cm-live-list-bullet::before {
+  content: '•';
+  position: absolute;
+  left: calc(6px + var(--list-indent, 0) * 24px);
+  color: var(--text-muted);
+  font-size: 1em;
+  line-height: inherit;
+}
+
+.cm-live-list-ordered::before {
+  content: attr(data-marker);
+  position: absolute;
+  left: calc(2px + var(--list-indent, 0) * 24px);
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: inherit;
+}
+
 /* ── Blockquote ── */
 .cm-live-blockquote {
   border-left: 3px solid var(--interactive-accent);

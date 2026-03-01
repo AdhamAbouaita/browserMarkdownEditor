@@ -208,6 +208,55 @@ function buildDecorations(view, getAssetUrl, editorMode) {
                 return false;
             }
 
+            // === LIST ITEMS ===
+            if (name === 'ListItem') {
+                const line = state.doc.lineAt(from);
+                if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
+
+                // Calculate nesting depth by counting BulletList/OrderedList ancestors
+                let depth = 0;
+                let ancestor = node.node.parent;
+                while (ancestor) {
+                    if (ancestor.name === 'BulletList' || ancestor.name === 'OrderedList') {
+                        depth++;
+                    }
+                    ancestor = ancestor.parent;
+                }
+                const indent = Math.max(0, depth - 1);
+
+                // Determine if this is an ordered or unordered list item
+                const isOrdered = node.node.parent?.name === 'OrderedList';
+
+                // Find and hide the ListMark (the `- `, `* `, or `1. `)
+                const lineText = line.text;
+                const markerMatch = lineText.match(/^(\s*)([-*]|\d+[.)]) /);
+                if (markerMatch) {
+                    const prefixLen = markerMatch[0].length;
+                    decorations.push(Decoration.replace({}).range(line.from, line.from + prefixLen));
+                }
+
+                // Apply the list line decoration with the nesting depth
+                if (isOrdered) {
+                    const numMatch = lineText.match(/^\s*(\d+)[.)] /);
+                    const num = numMatch ? numMatch[1] : '1';
+                    decorations.push(
+                        Decoration.line({
+                            class: 'cm-live-list-item cm-live-list-ordered',
+                            attributes: { 'data-marker': num + '.', style: `--list-indent: ${indent}` }
+                        }).range(line.from)
+                    );
+                } else {
+                    decorations.push(
+                        Decoration.line({
+                            class: 'cm-live-list-item cm-live-list-bullet',
+                            attributes: { style: `--list-indent: ${indent}` }
+                        }).range(line.from)
+                    );
+                }
+
+                // Don't return false — let children (emphasis, code, etc.) still be processed
+            }
+
             // === HORIZONTAL RULE ===
             if (name === 'HorizontalRule') {
                 if (editorMode !== 'read' && cursorOnLine(state, from, to)) return;
