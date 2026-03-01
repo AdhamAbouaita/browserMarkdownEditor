@@ -3,6 +3,7 @@ import { syntaxTree } from '@codemirror/language';
 import { MathWidget } from './mathWidget.js';
 import { HorizontalRuleWidget } from './hrWidget.js';
 import { ImageWidget } from './imageWidget.js';
+import { TableWidget } from './tableWidget.js';
 
 /**
  * Check if the cursor (or any selection) overlaps the range [from, to].
@@ -298,6 +299,22 @@ function buildDecorations(view, getAssetUrl, editorMode) {
 
         decorations.push(
             Decoration.replace({ widget: new ImageWidget(filename, width, getAssetUrl) }).range(from, to)
+        );
+    }
+
+    // === TABLES (GFM-style) ===
+    // Match consecutive lines starting and ending with | that include a separator row
+    const tableRegex = /(^\|.+\|[ \t]*\n)(^\|[\s:|-]+\|[ \t]*\n)((?:^\|.+\|[ \t]*\n?)+)/gm;
+    while ((match = tableRegex.exec(doc)) !== null) {
+        const from = match.index;
+        const to = from + match[0].length;
+        // Trim trailing newline from the range to avoid replacing it
+        const trimmedTo = doc[to - 1] === '\n' ? to - 1 : to;
+
+        if (editorMode !== 'read' && cursorInRange(state, from, trimmedTo)) continue;
+
+        decorations.push(
+            Decoration.replace({ widget: new TableWidget(match[0].trim()) }).range(from, trimmedTo)
         );
     }
 
