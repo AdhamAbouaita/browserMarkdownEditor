@@ -22,6 +22,27 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
     const livePreviewCompartmentRef = useRef(new Compartment());
     const onContentChangeRef = useRef(onContentChange);
     const activeFileRef = useRef(activeFile);
+    const saveScrollTimeoutRef = useRef(null);
+
+    // Debounced scroll persistence
+    const handleScroll = (view) => {
+        if (!activeFileRef.current) return;
+        const path = activeFileRef.current.path;
+        const scrollTop = view.scrollDOM.scrollTop;
+
+        if (saveScrollTimeoutRef.current) clearTimeout(saveScrollTimeoutRef.current);
+
+        saveScrollTimeoutRef.current = setTimeout(() => {
+            try {
+                const stored = localStorage.getItem('fileScrollPositions');
+                const positions = stored ? JSON.parse(stored) : {};
+                positions[path] = scrollTop;
+                localStorage.setItem('fileScrollPositions', JSON.stringify(positions));
+            } catch (err) {
+                console.error('Failed to save scroll position:', err);
+            }
+        }, 300);
+    };
 
     // Keep the callback ref up-to-date without re-creating the editor
     useEffect(() => {
@@ -118,6 +139,9 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                                 }
                             }
                             return false;
+                        },
+                        scroll(event, view) {
+                            handleScroll(view);
                         }
                     })
                 ],
@@ -140,7 +164,7 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
         };
     }, []);
 
-    // Swap document content when the active file changes
+        // Swap document content when the active file changes
     useEffect(() => {
         const view = viewRef.current;
         if (!view) return;
@@ -154,6 +178,23 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                     insert: fileContent,
                 },
             });
+        }
+
+        // Restore scroll position after setting content
+        if (activeFile) {
+            try {
+                const stored = localStorage.getItem('fileScrollPositions');
+                const positions = stored ? JSON.parse(stored) : {};
+                const savedScrollTop = positions[activeFile.path];
+                
+                requestAnimationFrame(() => {
+                    if (viewRef.current) {
+                        viewRef.current.scrollDOM.scrollTop = savedScrollTop !== undefined ? savedScrollTop : 0;
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to restore scroll position:', err);
+            }
         }
     }, [activeFile, fileContent]);
 
