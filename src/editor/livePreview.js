@@ -205,7 +205,7 @@ function buildDecorations(view, getAssetUrl, editorMode) {
                     );
                 }
 
-                return false;
+                // Don't return false — let children (emphasis, code, etc.) still be processed
             }
 
             // === LIST ITEMS ===
