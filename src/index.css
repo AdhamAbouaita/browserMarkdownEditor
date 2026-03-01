@@ -822,14 +822,14 @@ body {
 
 /* ── List Items ── */
 .cm-live-list-item {
-  padding-left: calc(24px + var(--list-indent, 0) * 24px) !important;
+  padding-left: calc(36px + var(--list-indent, 0) * 28px) !important;
   position: relative;
 }
 
 .cm-live-list-bullet::before {
   content: '•';
   position: absolute;
-  left: calc(6px + var(--list-indent, 0) * 24px);
+  left: calc(16px + var(--list-indent, 0) * 28px);
   color: var(--text-muted);
   font-size: 1em;
   line-height: inherit;
@@ -838,7 +838,7 @@ body {
 .cm-live-list-ordered::before {
   content: attr(data-marker);
   position: absolute;
-  left: calc(2px + var(--list-indent, 0) * 24px);
+  left: calc(12px + var(--list-indent, 0) * 28px);
   color: var(--text-muted);
   font-size: 0.9em;
   line-height: inherit;
