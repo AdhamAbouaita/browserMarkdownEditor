@@ -310,6 +310,12 @@ body {
   cursor: grab;
 }
 
+.nav-files-container.drag-over-root {
+  background: rgba(127, 90, 240, 0.08);
+  outline: 1px dashed var(--interactive-accent);
+  outline-offset: -1px;
+}
+
 .tree-item.is-active {
   background: var(--background-modifier-active);
   color: var(--text-normal);

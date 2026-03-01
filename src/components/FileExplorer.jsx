@@ -16,6 +16,7 @@ export default function FileExplorer({
     onMoveFile
 }) {
     const [creatingInRoot, setCreatingInRoot] = useState(null); // 'file' | 'folder' | null
+    const [rootDragOver, setRootDragOver] = useState(false);
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -44,6 +45,30 @@ export default function FileExplorer({
 
     const handleRootCreateBlur = () => {
         setCreatingInRoot(null);
+    };
+
+    // Root-level drop handlers — drop here moves items to the vault root
+    const handleRootDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        setRootDragOver(true);
+    };
+
+    const handleRootDragLeave = (e) => {
+        // Only trigger if we're actually leaving the container, not entering a child
+        if (e.currentTarget.contains(e.relatedTarget)) return;
+        setRootDragOver(false);
+    };
+
+    const handleRootDrop = async (e) => {
+        e.preventDefault();
+        setRootDragOver(false);
+        const draggedNode = TreeNode._draggedNode;
+        if (!draggedNode || !rootHandle) return;
+        TreeNode._draggedNode = null;
+        if (onMoveFile) {
+            await onMoveFile(draggedNode, rootHandle);
+        }
     };
 
     return (
@@ -77,7 +102,12 @@ export default function FileExplorer({
                 </div>
             </div>
 
-            <div className="nav-files-container">
+            <div
+                className={`nav-files-container${rootDragOver ? ' drag-over-root' : ''}`}
+                onDragOver={handleRootDragOver}
+                onDragLeave={handleRootDragLeave}
+                onDrop={handleRootDrop}
+            >
                 {creatingInRoot && (
                     <div className="tree-item tree-inline-input" style={{ paddingLeft: 12 }}>
                         <input
