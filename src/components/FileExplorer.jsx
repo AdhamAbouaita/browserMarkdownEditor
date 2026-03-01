@@ -47,21 +47,31 @@ export default function FileExplorer({
         setCreatingInRoot(null);
     };
 
-    // Root-level drop handlers — drop here moves items to the vault root
-    const handleRootDragOver = (e) => {
+    // Root-level drop handlers — use a counter to reliably track enter/leave
+    const dragCounterRef = useRef(0);
+
+    const handleRootDragEnter = (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+        dragCounterRef.current++;
         setRootDragOver(true);
     };
 
-    const handleRootDragLeave = (e) => {
-        // Only trigger if we're actually leaving the container, not entering a child
-        if (e.currentTarget.contains(e.relatedTarget)) return;
-        setRootDragOver(false);
+    const handleRootDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleRootDragLeave = () => {
+        dragCounterRef.current--;
+        if (dragCounterRef.current <= 0) {
+            dragCounterRef.current = 0;
+            setRootDragOver(false);
+        }
     };
 
     const handleRootDrop = async (e) => {
         e.preventDefault();
+        dragCounterRef.current = 0;
         setRootDragOver(false);
         const draggedNode = TreeNode._draggedNode;
         if (!draggedNode || !rootHandle) return;
@@ -70,6 +80,16 @@ export default function FileExplorer({
             await onMoveFile(draggedNode, rootHandle);
         }
     };
+
+    // Failsafe: clear the highlight when any drag operation ends
+    useEffect(() => {
+        const resetDrag = () => {
+            dragCounterRef.current = 0;
+            setRootDragOver(false);
+        };
+        document.addEventListener('dragend', resetDrag);
+        return () => document.removeEventListener('dragend', resetDrag);
+    }, []);
 
     return (
         <div className="file-explorer">
@@ -104,6 +124,7 @@ export default function FileExplorer({
 
             <div
                 className={`nav-files-container${rootDragOver ? ' drag-over-root' : ''}`}
+                onDragEnter={handleRootDragEnter}
                 onDragOver={handleRootDragOver}
                 onDragLeave={handleRootDragLeave}
                 onDrop={handleRootDrop}
