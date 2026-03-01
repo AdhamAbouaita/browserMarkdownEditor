@@ -472,9 +472,9 @@ body {
   /* Restrict max readable length */
   margin: 0 auto;
   /* Center it */
-  padding-left: 6%;
+  padding-left: var(--editor-padding, 6%);
   /* Responsive padding to prevent edge collision */
-  padding-right: 6%;
+  padding-right: var(--editor-padding, 6%);
 }
 
 /* ── Theme Toggle ── */
@@ -626,6 +626,24 @@ body {
 
 .settings-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
+}
+
+.settings-reset-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.settings-reset-btn:hover {
+  background: var(--interactive-accent);
+  color: #fff;
 }
 
 /* ── Empty state ── */

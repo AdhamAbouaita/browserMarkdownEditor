@@ -31,9 +31,10 @@ export default function App() {
   // The global light/dark theme state
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
-  // Font size settings (persisted via localStorage)
+  // Font size and padding settings (persisted via localStorage)
   const [editorFontSize, setEditorFontSize] = useState(() => parseInt(localStorage.getItem('editorFontSize') || '16', 10));
   const [treeFontSize, setTreeFontSize] = useState(() => parseInt(localStorage.getItem('treeFontSize') || '13', 10));
+  const [editorPadding, setEditorPadding] = useState(() => parseInt(localStorage.getItem('editorPadding') || '6', 10));
   const [showSettings, setShowSettings] = useState(false);
 
   // Keep HTML root data attribute in sync with state for global CSS variables
@@ -56,6 +57,17 @@ export default function App() {
     document.documentElement.style.setProperty('--nav-item-size', treeFontSize + 'px');
     localStorage.setItem('treeFontSize', treeFontSize);
   }, [treeFontSize]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--editor-padding', editorPadding + '%');
+    localStorage.setItem('editorPadding', editorPadding);
+  }, [editorPadding]);
+
+  const handleResetDefaults = useCallback((defaults) => {
+    setEditorFontSize(defaults.editorFontSize);
+    setTreeFontSize(defaults.treeFontSize);
+    setEditorPadding(defaults.editorPadding);
+  }, []);
 
   // Expanded folder paths (persisted via localStorage)
   const [expandedPaths, setExpandedPaths] = useState(() => {
@@ -348,8 +360,11 @@ export default function App() {
         <SettingsPanel
           editorFontSize={editorFontSize}
           treeFontSize={treeFontSize}
+          editorPadding={editorPadding}
           onEditorFontSizeChange={setEditorFontSize}
           onTreeFontSizeChange={setTreeFontSize}
+          onEditorPaddingChange={setEditorPadding}
+          onResetDefaults={handleResetDefaults}
           onClose={() => setShowSettings(false)}
         />
       )}

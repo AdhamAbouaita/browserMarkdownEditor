@@ -1,6 +1,8 @@
 import React from 'react';
 
-export default function SettingsPanel({ editorFontSize, treeFontSize, onEditorFontSizeChange, onTreeFontSizeChange, onClose }) {
+const DEFAULTS = { editorFontSize: 16, treeFontSize: 13, editorPadding: 6 };
+
+export default function SettingsPanel({ editorFontSize, treeFontSize, editorPadding, onEditorFontSizeChange, onTreeFontSizeChange, onEditorPaddingChange, onResetDefaults, onClose }) {
     return (
         <div className="settings-overlay" onClick={onClose}>
             <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
@@ -39,8 +41,31 @@ export default function SettingsPanel({ editorFontSize, treeFontSize, onEditorFo
                             className="settings-slider"
                         />
                     </div>
+                    <div className="settings-group">
+                        <label className="settings-label">
+                            Text Width (Padding)
+                            <span className="settings-value">{editorPadding}%</span>
+                        </label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="20"
+                            step="1"
+                            value={editorPadding}
+                            onChange={(e) => onEditorPaddingChange(parseInt(e.target.value, 10))}
+                            className="settings-slider"
+                        />
+                    </div>
+                    <button
+                        className="settings-reset-btn"
+                        onClick={() => onResetDefaults(DEFAULTS)}
+                    >
+                        Reset to Defaults
+                    </button>
                 </div>
             </div>
         </div>
     );
 }
+
+export { DEFAULTS };
