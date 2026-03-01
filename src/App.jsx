@@ -107,7 +107,11 @@ export default function App() {
 
   const handleFileClick = useCallback(async (node) => {
     try {
-      if (node.name.toLowerCase().endsWith('.pdf')) {
+      const lowerName = node.name.toLowerCase();
+      if (lowerName.endsWith('.pdf') || 
+          lowerName.endsWith('.jpg') || 
+          lowerName.endsWith('.jpeg') || 
+          lowerName.endsWith('.png')) {
         const file = await node.handle.getFile();
         const url = URL.createObjectURL(file);
         window.open(url, '_blank');
