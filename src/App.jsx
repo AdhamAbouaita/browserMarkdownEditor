@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useFileSystem } from './context/FileSystemContext.jsx';
+import { HELP_DOC_CONTENT } from './utils/helpDoc.js';
+import './index.css';
 import FileExplorer from './components/FileExplorer.jsx';
 import EditorPane from './components/EditorPane.jsx';
 import SettingsPanel from './components/SettingsPanel.jsx';
@@ -153,8 +155,15 @@ export default function App() {
     }
   }, [fileTree, handleFileClick]);
 
+  const handleHelpClick = useCallback(() => {
+    setActiveFile({ name: 'Help Guide', isHelp: true, path: 'help-guide' });
+    setFileContent(HELP_DOC_CONTENT);
+    setEditorMode('read');
+    setSaveStatus('');
+  }, []);
+
   const handleSave = useCallback(async () => {
-    if (!activeFile) return;
+    if (!activeFile || activeFile.isHelp) return;
     try {
       await writeFile(activeFile.handle, fileContent);
       setSaveStatus('Saved');
@@ -223,7 +232,9 @@ export default function App() {
       // Cmd+E — toggle read/edit mode
       if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
         e.preventDefault();
-        setEditorMode(prev => prev === 'edit' ? 'read' : 'edit');
+        if (!activeFileRef.current?.isHelp) {
+          setEditorMode(prev => prev === 'edit' ? 'read' : 'edit');
+        }
       }
     };
     window.addEventListener('keydown', handler);
@@ -232,11 +243,11 @@ export default function App() {
 
   // Debounced auto-save (1 second after last keystroke)
   useEffect(() => {
-    if (!activeFile) return;
+    if (!activeFile || activeFile.isHelp) return;
     const timer = setTimeout(async () => {
       const file = activeFileRef.current;
       const content = fileContentRef.current;
-      if (!file) return;
+      if (!file || file.isHelp) return;
       try {
         await writeFile(file.handle, content);
         setSaveStatus('Saved');
@@ -371,6 +382,7 @@ export default function App() {
           saveStatus={saveStatus}
           onContentChange={setFileContent}
           onSave={handleSave}
+          onHelpClick={handleHelpClick}
         />
       </div>
       {showSettings && (

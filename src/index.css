@@ -442,6 +442,26 @@ body {
   white-space: nowrap;
 }
 
+.view-header-help-btn {
+  margin-left: auto;
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-header-help-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
 .save-status {
   font-size: 11px;
   color: var(--text-accent);

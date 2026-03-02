@@ -11,9 +11,10 @@ import { createLivePreviewPlugin } from '../editor/livePreview.js';
 import { markdownFormatKeymap } from '../editor/formatKeymap.js';
 import { Compartment } from '@codemirror/state';
 import { useFileSystem } from '../context/FileSystemContext.jsx';
+import { HelpCircle } from './icons.jsx';
 import 'katex/dist/katex.min.css';
 
-export default function EditorPane({ activeFile, fileContent, theme, editorMode, saveStatus, onContentChange, onSave }) {
+export default function EditorPane({ activeFile, fileContent, theme, editorMode, saveStatus, onContentChange, onSave, onHelpClick }) {
     const { getAssetUrl, saveAsset } = useFileSystem();
     const editorContainerRef = useRef(null);
     const viewRef = useRef(null);
@@ -164,7 +165,7 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
         };
     }, []);
 
-        // Swap document content when the active file changes
+    // Swap document content when the active file changes
     useEffect(() => {
         const view = viewRef.current;
         if (!view) return;
@@ -186,7 +187,7 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                 const stored = localStorage.getItem('fileScrollPositions');
                 const positions = stored ? JSON.parse(stored) : {};
                 const savedScrollTop = positions[activeFile.path];
-                
+
                 requestAnimationFrame(() => {
                     if (viewRef.current) {
                         viewRef.current.scrollDOM.scrollTop = savedScrollTop !== undefined ? savedScrollTop : 0;
@@ -244,6 +245,13 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                     {activeFile.name} {editorMode === 'read' && <span style={{ opacity: 0.6, fontStyle: 'italic', marginLeft: 6 }}>(Read-Only)</span>}
                 </span>
                 {saveStatus && <span className="save-status">{saveStatus}</span>}
+                <button
+                    className="view-header-help-btn"
+                    onClick={onHelpClick}
+                    title="Help & Guide"
+                >
+                    <HelpCircle size={16} />
+                </button>
             </div>
             <div
                 className="view-content"
