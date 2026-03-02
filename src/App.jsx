@@ -5,7 +5,7 @@ import './index.css';
 import FileExplorer from './components/FileExplorer.jsx';
 import EditorPane from './components/EditorPane.jsx';
 import SettingsPanel from './components/SettingsPanel.jsx';
-import { Settings } from './components/icons.jsx';
+import { Settings, HelpCircle } from './components/icons.jsx';
 
 export default function App() {
   const {
@@ -364,6 +364,14 @@ export default function App() {
         <div className="sidebar-bottom-actions">
           <button
             className="theme-toggle-btn settings-btn"
+            onClick={handleHelpClick}
+            title="Help & Guide"
+          >
+            <HelpCircle size={16} />
+            Help Guide
+          </button>
+          <button
+            className="theme-toggle-btn settings-btn"
             onClick={() => setShowSettings(true)}
             title="Settings"
           >
@@ -382,7 +390,6 @@ export default function App() {
           saveStatus={saveStatus}
           onContentChange={setFileContent}
           onSave={handleSave}
-          onHelpClick={handleHelpClick}
         />
       </div>
       {showSettings && (

@@ -11,10 +11,9 @@ import { createLivePreviewPlugin } from '../editor/livePreview.js';
 import { markdownFormatKeymap } from '../editor/formatKeymap.js';
 import { Compartment } from '@codemirror/state';
 import { useFileSystem } from '../context/FileSystemContext.jsx';
-import { HelpCircle } from './icons.jsx';
 import 'katex/dist/katex.min.css';
 
-export default function EditorPane({ activeFile, fileContent, theme, editorMode, saveStatus, onContentChange, onSave, onHelpClick }) {
+export default function EditorPane({ activeFile, fileContent, theme, editorMode, saveStatus, onContentChange, onSave }) {
     const { getAssetUrl, saveAsset } = useFileSystem();
     const editorContainerRef = useRef(null);
     const viewRef = useRef(null);
@@ -245,13 +244,6 @@ export default function EditorPane({ activeFile, fileContent, theme, editorMode,
                     {activeFile.name} {editorMode === 'read' && <span style={{ opacity: 0.6, fontStyle: 'italic', marginLeft: 6 }}>(Read-Only)</span>}
                 </span>
                 {saveStatus && <span className="save-status">{saveStatus}</span>}
-                <button
-                    className="view-header-help-btn"
-                    onClick={onHelpClick}
-                    title="Help & Guide"
-                >
-                    <HelpCircle size={16} />
-                </button>
             </div>
             <div
                 className="view-content"

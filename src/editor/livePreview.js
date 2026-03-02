@@ -106,16 +106,6 @@ function buildDecorations(view, getAssetUrl, editorMode) {
                 return false;
             }
 
-            // === ESCAPED CHARACTERS ===
-            if (name === 'Escape') {
-                if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
-
-                // An Escape node is always a backslash followed by the character.
-                // We just want to visually hide the backslash (the first character).
-                decorations.push(Decoration.replace({}).range(from, from + 1));
-                return false;
-            }
-
             // === INLINE CODE ===
             if (name === 'InlineCode') {
                 if (editorMode !== 'read' && cursorInRange(state, from, to)) return;
